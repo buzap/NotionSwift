@@ -68,7 +68,9 @@ extension DatabasePropertyFilter {
 }
 
 extension DatabasePropertyFilter {
-    public enum SimpleGenericCondition<T: Encodable> {
+    public enum SimpleGenericCondition<T: Codable & Equatable> {
+        typealias Value = T
+        
         case contains(T)
         case doesNotContain(T)
         case isEmpty
@@ -108,3 +110,13 @@ extension DatabasePropertyFilter {
         case isNotEmpty
     }
 }
+
+extension DatabasePropertyFilter: Equatable {}
+extension DatabasePropertyFilter.PropertyType: Equatable {}
+extension DatabasePropertyFilter.CheckboxCondition: Equatable {}
+extension DatabasePropertyFilter.DateCondition: Equatable {}
+extension DatabasePropertyFilter.FilesCondition: Equatable {}
+extension DatabasePropertyFilter.FormulaCondition: Equatable {}
+extension DatabasePropertyFilter.NumberCondition: Equatable {}
+extension DatabasePropertyFilter.SimpleGenericCondition: Equatable {}
+extension DatabasePropertyFilter.TextCondition: Equatable {}

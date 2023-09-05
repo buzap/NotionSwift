@@ -5,16 +5,34 @@
 import Foundation
 
 public enum CompountFilterType {
-    case or([DatabaseFilterType])
-    case and([DatabaseFilterType])
+    case or([DatabaseFilter])
+    case and([DatabaseFilter])
 }
 
 // MARK: - Codable
 
-extension CompountFilterType: Encodable {
+extension CompountFilterType: Codable {
     enum CodingKeys: String, CodingKey {
         case and
         case or
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        
+        if let value = try values.decodeIfPresent([DatabaseFilter].self, forKey: .and) {
+            self = .and(value)
+            return
+        }
+        if let value = try values.decodeIfPresent([DatabaseFilter].self, forKey: .or) {
+            self = .or(value)
+            return
+        }
+        
+        throw DecodingError.valueNotFound(
+            Self.self,
+            .init(codingPath: decoder.codingPath, debugDescription: "no known coding key found, allKeys: \(values.allKeys)")
+        )
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -27,3 +45,5 @@ extension CompountFilterType: Encodable {
         }
     }
 }
+
+extension CompountFilterType: Equatable {}
