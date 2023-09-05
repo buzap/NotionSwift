@@ -4,41 +4,51 @@
 
 import Foundation
 
-public struct DatabaseFilter {
-    let array: [DatabaseFilterType]
+public enum DatabaseFilter {
+    case databaseProperty(DatabasePropertyFilter)
+    case compound(CompountFilterType)
 }
 
 extension DatabaseFilter {
     public static func property(name: String, type: DatabasePropertyFilter.PropertyType) -> DatabaseFilter {
-        DatabaseFilter(array: [.databaseProperty(.init(property: name, filterType: type))])
+        .databaseProperty(.init(property: name, filterType: type))
     }
 
     public static func or(_ filters: [DatabaseFilter]) -> DatabaseFilter {
-        let flatFilters: [DatabaseFilterType] = filters.map(\.array).flatMap({ $0 })
-        let array: [DatabaseFilterType] = [
-            .compound(.or(flatFilters))
-        ]
-
-        return .init(array: array)
+        .compound(.or(filters))
     }
 
     public static func and(_ filters: [DatabaseFilter]) -> DatabaseFilter {
-        let flatFilters: [DatabaseFilterType] = filters.map(\.array).flatMap({ $0 })
-        let array: [DatabaseFilterType] = [
-            .compound(.and(flatFilters))
-        ]
-
-        return .init(array: array)
+        .compound(.and(filters))
     }
 }
 
-// MARK: - Codable
 
-extension DatabaseFilter: Encodable {
-
+extension DatabaseFilter: Codable {
+    enum CodingKeys: String, CodingKey {
+        case property
+        case and
+        case or
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        
+        if values.contains(.property) {
+            self = .databaseProperty(try .init(from: decoder))
+            return
+        }
+        self = .compound(try .init(from: decoder))
+    }
+    
     public func encode(to encoder: Encoder) throws {
-        for element in array {
-            try element.encode(to: encoder)
+        switch self {
+        case .databaseProperty(let value):
+            try value.encode(to: encoder)
+        case .compound(let value):
+            try value.encode(to: encoder)
         }
     }
 }
+
+extension DatabaseFilter: Equatable {}
